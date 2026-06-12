@@ -1,15 +1,15 @@
 # PRISM 🔍
 
-**PRISM** is an AI-powered GitHub Pull Request code review bot. It automatically analyzes pull request diffs and posts intelligent, context-aware review comments using Google Gemini.
+**PRISM** is an AI-powered GitHub Pull Request code review bot. It automatically analyzes pull request diffs and posts intelligent, context-aware review comments using Groq.
 
 ---
 
 ## Features
 
-- 🤖 AI-driven code review powered by **Google Gemini**
+- 🤖 AI-driven code review powered by **Groq (Llama 3.3)**
 - 🔗 Integrates with the **GitHub API** to fetch PR diffs and post comments
 - ⚡ Built with **FastAPI** for a fast, async webhook server
-- 🔒 Secure token-based authentication for GitHub and Gemini
+- 🔒 Secure token-based authentication for GitHub and Groq
 
 ---
 
@@ -53,7 +53,7 @@ Fill in your credentials in the `.env` file:
 
 ```env
 GITHUB_TOKEN=your_github_personal_access_token
-GEMINI_API_KEY=your_google_gemini_api_key
+GROQ_API_KEY=your_groq_api_key
 ```
 
 > ⚠️ **Never commit your `.env` file.** Add it to `.gitignore`.
@@ -84,9 +84,8 @@ The API will be available at `http://localhost:8000`.
 |---------------------|----------------------------------|
 | FastAPI             | Async web server / webhook handler |
 | Uvicorn             | ASGI server                      |
-| HTTPX               | Async HTTP client for GitHub API |
+| HTTPX               | Async HTTP client for GitHub API and Groq |
 | python-dotenv       | Environment variable management  |
-| google-generativeai | Gemini AI SDK for code review    |
 
 ---
 

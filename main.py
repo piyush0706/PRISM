@@ -7,7 +7,6 @@ import os
 
 import httpx
 import uvicorn
-import google.generativeai as genai
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 
@@ -15,7 +14,7 @@ load_dotenv()
 
 app = FastAPI(
     title="PRISM",
-    description="An AI-powered GitHub Pull Request code review bot using Google Gemini.",
+    description="An AI-powered GitHub Pull Request code review bot using Groq.",
     version="0.1.0",
 )
 
@@ -104,7 +103,7 @@ async def post_github_comment(repo: str, pr_number: int, body: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Gemini AI helpers
+# Groq AI helpers
 # ---------------------------------------------------------------------------
 
 REVIEW_PROMPT_TEMPLATE = """\
@@ -116,29 +115,50 @@ PR DIFF:
 {diff}"""
 
 
-async def review_with_gemini(diff: str) -> str:
+async def review_with_groq(diff: str) -> str:
     """
-    Send a PR diff to Gemini and return an AI-generated code review.
+    Send a PR diff to Groq and return an AI-generated code review.
 
     Args:
         diff: Raw unified diff string from the GitHub API.
 
     Returns:
-        Gemini's review as a plain text string.
+        Groq's review as a plain text string.
 
     Raises:
-        HTTPException: If GEMINI_API_KEY is missing or the API call fails.
+        HTTPException: If GROQ_API_KEY is missing or the API call fails.
     """
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY is not configured.")
+        raise HTTPException(status_code=500, detail="GROQ_API_KEY is not configured.")
 
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    data = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": [
+            {
+                "role": "user",
+                "content": REVIEW_PROMPT_TEMPLATE.format(diff=diff)
+            }
+        ],
+        "temperature": 0.2
+    }
 
-    prompt = REVIEW_PROMPT_TEMPLATE.format(diff=diff)
-    response = await model.generate_content_async(prompt)
-    return response.text
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=data, timeout=30.0)
+
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=f"Groq API error: {response.text}",
+        )
+
+    result = response.json()
+    return result["choices"][0]["message"]["content"]
 
 
 @app.post("/webhook")
@@ -160,10 +180,10 @@ async def github_webhook(request: Request):
 
             try:
                 diff = await get_pr_diff(repo_full_name, pr_number)
-                print(f"[PRISM] Diff fetched ({len(diff)} chars). Sending to Gemini...")
+                print(f"[PRISM] Diff fetched ({len(diff)} chars). Sending to Groq...")
 
-                review = await review_with_gemini(diff)
-                print(f"[PRISM] Gemini review received. Posting comment...")
+                review = await review_with_groq(diff)
+                print(f"[PRISM] Groq review received. Posting comment...")
 
                 await post_github_comment(repo_full_name, pr_number, review)
                 print(f"[PRISM] ✅ Review posted on PR #{pr_number} in {repo_full_name}")

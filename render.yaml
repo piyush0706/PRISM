@@ -11,5 +11,5 @@ services:
     envVars:
       - key: GITHUB_TOKEN
         sync: false              # you fill this in on the Render dashboard
-      - key: GEMINI_API_KEY
+      - key: GROQ_API_KEY
         sync: false              # you fill this in on the Render dashboard
