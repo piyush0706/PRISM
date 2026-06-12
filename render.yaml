@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: prism-review-bot
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free                   # free tier — spins down after 15 min inactivity
+    region: oregon               # closest free-tier region
+    branch: main                 # deploy from main branch
+    autoDeploy: true             # redeploy automatically on git push
+
+    envVars:
+      - key: GITHUB_TOKEN
+        sync: false              # you fill this in on the Render dashboard
+      - key: GEMINI_API_KEY
+        sync: false              # you fill this in on the Render dashboard

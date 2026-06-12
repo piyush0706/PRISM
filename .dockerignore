@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Secrets — never bake into image
+.env
+
+# Dev / editor artifacts
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Git
+.git/
+.gitignore
