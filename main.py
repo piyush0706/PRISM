@@ -134,7 +134,7 @@ async def review_with_gemini(diff: str) -> str:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY is not configured.")
 
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-2.0-flash")
 
     prompt = REVIEW_PROMPT_TEMPLATE.format(diff=diff)
     response = await model.generate_content_async(prompt)
