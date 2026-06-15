@@ -5,6 +5,7 @@
 [![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-prism--ldxm.onrender.com-7C5CFF?style=for-the-badge)](https://prism-ldxm.onrender.com/dashboard)
 [![Dashboard](https://img.shields.io/badge/📊%20Dashboard-View%20Now-00D084?style=for-the-badge)](https://prism-ldxm.onrender.com/dashboard)
 [![API Docs](https://img.shields.io/badge/📖%20API%20Docs-Swagger%20UI-blue?style=for-the-badge)](https://prism-ldxm.onrender.com/docs)
+[![Presentation Video](https://img.shields.io/badge/🎥%20Presentation%20Video-Watch%20Now-FF4D6D?style=for-the-badge)](https://drive.google.com/file/d/1czU-335stP4kuEKUPnwcM9Plq6Ji3BYq/view?usp=sharing)
 
 
 
