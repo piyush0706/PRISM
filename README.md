@@ -50,7 +50,35 @@ PRISM/
 ├── SYSTEM_ARCHITECTURE.md # System Design & Diagram
 └── SAMPLE_DEMO.md     # Setup & Walkthrough
 ```
+# 🏗️ System Architecture
 
+The end-to-end flow of PRISM, from GitHub pull requests to memory-augmented AI analysis.
+
+![Architecture](docs/architecture.jpeg)
+
+---
+
+# 🧠 Memory-Augmented Review
+
+PRISM searches historical incidents and postmortems to identify recurring failure patterns before code reaches production.
+
+![Memory Test](docs/memory-test.png)
+
+---
+
+# 📊 Dashboard Analytics
+
+A centralized view of incidents, recurring bugs, and organizational memory insights.
+
+![Dashboard](docs/dashboard.png)
+
+---
+
+# 🔌 API Endpoints
+
+Interactive FastAPI documentation exposing incident management, memory retrieval, and review endpoints.
+
+![API](docs/api.png)
 ---
 
 ## 🚀 Quick Local Setup
