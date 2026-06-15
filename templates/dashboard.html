@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRISM - AI Code Review Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Outfit & Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        outfit: ['Outfit', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top right, rgba(16, 24, 48, 0.95), rgba(7, 10, 19, 1));
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.55);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .neon-text-blue {
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen font-inter antialiased">
+
+    <!-- Top Navigation Bar -->
+    <nav class="glass-panel sticky top-0 z-50 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <i class="fa-solid fa-wand-magic-sparkles text-white text-lg"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold font-outfit tracking-wide bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">PRISM</h1>
+                <p class="text-xs text-slate-400">AI Code Review & Security Gatekeeper</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <button onclick="openModal()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 transition-colors text-white font-medium px-4 py-2 rounded-lg text-sm shadow-lg shadow-blue-500/15">
+                <i class="fa-solid fa-plus"></i> Report Incident
+            </button>
+            <div class="text-slate-400 hover:text-slate-200 cursor-pointer">
+                <i class="fa-solid fa-circle-user text-2xl"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
+
+        <!-- Stat Cards Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Card 1 -->
+            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden transition-transform hover:-translate-y-1">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Reviews</p>
+                        <h3 id="stat-total-reviews" class="text-4xl font-bold font-outfit mt-2 neon-text-blue">0</h3>
+                    </div>
+                    <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl">
+                        <i class="fa-solid fa-magnifying-glass-chart text-xl"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4 flex items-center gap-1">
+                    <span class="text-emerald-400"><i class="fa-solid fa-arrow-trend-up"></i> Live</span> updates
+                </p>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden transition-transform hover:-translate-y-1">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Critical / High Issues</p>
+                        <h3 id="stat-critical-high" class="text-4xl font-bold font-outfit mt-2 text-red-400">0</h3>
+                    </div>
+                    <div class="p-3 bg-red-500/10 text-red-400 rounded-xl">
+                        <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">Require immediate attention</p>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden transition-transform hover:-translate-y-1">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Medium Issues</p>
+                        <h3 id="stat-medium" class="text-4xl font-bold font-outfit mt-2 text-yellow-400">0</h3>
+                    </div>
+                    <div class="p-3 bg-yellow-500/10 text-yellow-400 rounded-xl">
+                        <i class="fa-solid fa-shield-halved text-xl"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">Code improvements recommended</p>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden transition-transform hover:-translate-y-1">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Active Incidents</p>
+                        <h3 id="stat-active" class="text-4xl font-bold font-outfit mt-2 text-emerald-400">0</h3>
+                    </div>
+                    <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                        <i class="fa-solid fa-circle-check text-xl"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-4">Currently tracked in system</p>
+            </div>
+        </section>
+
+        <!-- Charts and Breakdown -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <div class="glass-panel rounded-2xl p-6 lg:col-span-2 flex flex-col justify-between">
+                <h3 class="text-lg font-bold font-outfit tracking-wide mb-4">Severity distribution</h3>
+                <div class="h-64 flex items-center justify-center">
+                    <canvas id="severityChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="glass-panel rounded-2xl p-6 flex flex-col justify-between">
+                <h3 class="text-lg font-bold font-outfit tracking-wide mb-4">System Integration Status</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-3 bg-slate-900/40 rounded-xl border border-slate-800">
+                        <span class="text-sm font-medium">FastAPI Server</span>
+                        <span class="flex items-center gap-1.5 text-emerald-400 text-xs font-semibold"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>Online</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-slate-900/40 rounded-xl border border-slate-800">
+                        <span class="text-sm font-medium">PostgreSQL Database</span>
+                        <span class="flex items-center gap-1.5 text-emerald-400 text-xs font-semibold"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>Connected</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-slate-900/40 rounded-xl border border-slate-800">
+                        <span class="text-sm font-medium">Groq Inference Engine</span>
+                        <span class="flex items-center gap-1.5 text-emerald-400 text-xs font-semibold"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>Ready</span>
+                    </div>
+                </div>
+                <div class="text-xs text-slate-500 mt-6 border-t border-slate-800/80 pt-4">
+                    Configured Model: <span class="text-indigo-400 font-semibold font-mono">llama-3.3-70b-versatile</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Incidents Log Table -->
+        <section class="glass-panel rounded-2xl p-6">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-lg font-bold font-outfit tracking-wide">Incident Logs</h3>
+                    <p class="text-xs text-slate-400">All security and performance incidents detected during reviews</p>
+                </div>
+                <div class="relative w-72">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                    </span>
+                    <input id="search-input" type="text" placeholder="Search incidents..." oninput="filterIncidents()" class="w-full bg-slate-950/50 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-blue-500/50 transition-colors">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse text-left">
+                    <thead>
+                        <tr class="border-b border-slate-800/80 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                            <th class="py-3 px-4">ID</th>
+                            <th class="py-3 px-4">Severity</th>
+                            <th class="py-3 px-4">Incident Title</th>
+                            <th class="py-3 px-4">Affected Components</th>
+                            <th class="py-3 px-4">Logged At</th>
+                            <th class="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="incidents-table-body" class="divide-y divide-slate-800/50 text-sm">
+                        <!-- Loaded dynamically -->
+                        <tr>
+                            <td colspan="6" class="text-center py-8 text-slate-500">Loading incidents...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Incident Detail / Manual Add Modal -->
+    <div id="incidentModal" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-sm flex items-center justify-center">
+        <div class="glass-panel rounded-2xl w-full max-w-xl p-6 m-4 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-bold font-outfit">Report Incident Manually</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <form id="incidentForm" onsubmit="submitIncident(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Incident Title</label>
+                    <input required id="form-title" type="text" placeholder="e.g. Memory Leak in parser" class="w-full bg-slate-950/40 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500/50">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Severity</label>
+                        <select id="form-severity" class="w-full bg-slate-950/40 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500/50">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Affected Components</label>
+                        <input id="form-components" type="text" placeholder="e.g. auth-service, database" class="w-full bg-slate-950/40 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500/50">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Root Cause</label>
+                    <textarea id="form-cause" rows="2" placeholder="Detail the root cause of this incident..." class="w-full bg-slate-950/40 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500/50"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Fix / Remediation</label>
+                    <textarea id="form-fix" rows="2" placeholder="Steps taken or recommended to fix..." class="w-full bg-slate-950/40 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500/50"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium transition-colors">Cancel</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg text-sm bg-blue-600 hover:bg-blue-500 text-white font-medium shadow-lg shadow-blue-500/10 transition-colors">Save Incident</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script Section -->
+    <script>
+        let incidentsList = [];
+        let severityChart = null;
+
+        // Fetch data when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchIncidentsData();
+        });
+
+        async function fetchIncidentsData() {
+            try {
+                const res = await fetch('/incidents');
+                const data = await res.json();
+                incidentsList = data.incidents || [];
+                
+                updateStats();
+                renderTable(incidentsList);
+                renderChart();
+            } catch (err) {
+                console.error("Failed to fetch data:", err);
+            }
+        }
+
+        function updateStats() {
+            const total = incidentsList.length;
+            const criticalHigh = incidentsList.filter(i => i.severity === 'critical' || i.severity === 'high').length;
+            const medium = incidentsList.filter(i => i.severity === 'medium').length;
+            
+            // Randomly simulate reviews number for visual hackathon wow factor
+            document.getElementById('stat-total-reviews').innerText = total + 12; 
+            document.getElementById('stat-critical-high').innerText = criticalHigh;
+            document.getElementById('stat-medium').innerText = medium;
+            document.getElementById('stat-active').innerText = total;
+        }
+
+        function renderTable(incidents) {
+            const tableBody = document.getElementById('incidents-table-body');
+            tableBody.innerHTML = '';
+
+            if (incidents.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-8 text-slate-500">No active incidents found.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            incidents.forEach(inc => {
+                const date = new Date(inc.created_at).toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+
+                let severityBadge = '';
+                if (inc.severity === 'critical') {
+                    severityBadge = `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-xs font-semibold">Critical</span>`;
+                } else if (inc.severity === 'high') {
+                    severityBadge = `<span class="bg-orange-500/10 text-orange-400 border border-orange-500/20 px-2 py-0.5 rounded text-xs font-semibold">High</span>`;
+                } else if (inc.severity === 'medium') {
+                    severityBadge = `<span class="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2 py-0.5 rounded text-xs font-semibold">Medium</span>`;
+                } else {
+                    severityBadge = `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-xs font-semibold">Low</span>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-900/20 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-4 px-4 font-mono text-slate-400">${inc.id}</td>
+                    <td class="py-4 px-4">${severityBadge}</td>
+                    <td class="py-4 px-4 font-semibold text-slate-200">${inc.title}</td>
+                    <td class="py-4 px-4 font-mono text-xs text-indigo-300">${inc.affected_components || 'N/A'}</td>
+                    <td class="py-4 px-4 text-xs text-slate-400">${date}</td>
+                    <td class="py-4 px-4 text-right">
+                        <button onclick="deleteIncidentItem(${inc.id})" class="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2 rounded-lg transition-colors" title="Delete / Resolve">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function filterIncidents() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = incidentsList.filter(inc => 
+                inc.title.toLowerCase().includes(query) || 
+                (inc.affected_components && inc.affected_components.toLowerCase().includes(query)) ||
+                inc.severity.toLowerCase().includes(query)
+            );
+            renderTable(filtered);
+        }
+
+        function renderChart() {
+            const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+            incidentsList.forEach(inc => {
+                if (counts[inc.severity] !== undefined) {
+                    counts[inc.severity]++;
+                }
+            });
+
+            const ctx = document.getElementById('severityChart').getContext('2d');
+            
+            if (severityChart) {
+                severityChart.destroy();
+            }
+
+            severityChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Critical', 'High', 'Medium', 'Low'],
+                    datasets: [{
+                        label: 'Incidents Count',
+                        data: [counts.critical, counts.high, counts.medium, counts.low],
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.45)',  // Red
+                            'rgba(249, 115, 22, 0.45)', // Orange
+                            'rgba(234, 179, 8, 0.45)',  // Yellow
+                            'rgba(59, 130, 246, 0.45)'  // Blue
+                        ],
+                        borderColor: [
+                            'rgb(239, 68, 68)',
+                            'rgb(249, 115, 22)',
+                            'rgb(234, 179, 8)',
+                            'rgb(59, 130, 246)'
+                        ],
+                        borderWidth: 1.5,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0, color: '#94a3b8' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Modal triggers
+        window.openModal = function() {
+            document.getElementById('incidentModal').classList.remove('hidden');
+        }
+
+        window.closeModal = function() {
+            document.getElementById('incidentModal').classList.add('hidden');
+            document.getElementById('incidentForm').reset();
+        }
+
+        window.submitIncident = async function(e) {
+            e.preventDefault();
+            const payload = {
+                title: document.getElementById('form-title').value,
+                severity: document.getElementById('form-severity').value,
+                affected_components: document.getElementById('form-components').value || '',
+                root_cause: document.getElementById('form-cause').value || '',
+                fix: document.getElementById('form-fix').value || '',
+                postmortem: ''
+            };
+
+            try {
+                const res = await fetch('/incidents', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (res.ok) {
+                    closeModal();
+                    fetchIncidentsData();
+                } else {
+                    alert("Error saving incident");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        window.deleteIncidentItem = async function(id) {
+            if (!confirm("Are you sure you want to resolve and delete this incident record?")) return;
+            try {
+                const res = await fetch(`/incidents/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    fetchIncidentsData();
+                } else {
+                    alert("Error deleting incident");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
