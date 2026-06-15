@@ -96,6 +96,45 @@ Base.metadata.create_all(bind=engine)
 
 
 # ─────────────────────────────────────────
+# 6. System Counters (persistent across restarts)
+# ─────────────────────────────────────────
+class SystemCounter(Base):
+    __tablename__ = "system_counters"
+    key   = Column(String(50), primary_key=True)
+    value = Column(Integer, default=0, nullable=False)
+
+# Ensure this table also exists
+Base.metadata.create_all(bind=engine)
+
+
+def get_counter(key: str) -> int:
+    """Fetch a named counter value from the database."""
+    db = SessionLocal()
+    try:
+        row = db.query(SystemCounter).filter(SystemCounter.key == key).first()
+        return row.value if row else 0
+    finally:
+        db.close()
+
+
+def increment_counter(key: str, amount: int = 1) -> int:
+    """Atomically increment a named counter and return the new value."""
+    db = SessionLocal()
+    try:
+        row = db.query(SystemCounter).filter(SystemCounter.key == key).first()
+        if row:
+            row.value += amount
+        else:
+            row = SystemCounter(key=key, value=amount)
+            db.add(row)
+        db.commit()
+        db.refresh(row)
+        return row.value
+    finally:
+        db.close()
+
+
+# ─────────────────────────────────────────
 # 5. FastAPI Dependency — get_db()
 #    Usage in routes:
 #      def my_route(db: Session = Depends(get_db)): ...

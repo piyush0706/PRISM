@@ -128,12 +128,7 @@ td{padding:14px;font-size:13px;vertical-align:middle}
   </div>
   <div class="nav-section">Main</div>
   <div class="nav-item active"><i class="fa-solid fa-gauge-high"></i> Dashboard</div>
-  <div class="nav-item"><i class="fa-solid fa-triangle-exclamation"></i> Incidents</div>
-  <div class="nav-item"><i class="fa-solid fa-brain"></i> Memory</div>
-  <div class="nav-item"><i class="fa-solid fa-chart-line"></i> Analytics</div>
-  <div class="nav-section">System</div>
-  <div class="nav-item"><i class="fa-solid fa-plug"></i> Integrations</div>
-  <div class="nav-item"><i class="fa-solid fa-gear"></i> Settings</div>
+  <div class="nav-item" onclick="document.getElementById('incidents-section').scrollIntoView({behavior:'smooth'})"><i class="fa-solid fa-triangle-exclamation"></i> Incidents</div>
   <div class="sidebar-footer">
     <span class="status-dot"></span>
     <span style="font-size:12px;color:var(--muted)">All systems operational</span>
@@ -167,8 +162,8 @@ td{padding:14px;font-size:13px;vertical-align:middle}
     <div class="metric-card emerald glow-emerald">
       <div class="metric-icon emerald"><i class="fa-solid fa-code-pull-request"></i></div>
       <div class="metric-label">PRs Reviewed</div>
-      <div class="metric-value" id="stat-prs" style="color:var(--emerald)">12</div>
-      <div class="metric-sub">By Groq Llama-3-70B</div>
+      <div class="metric-value" id="stat-prs" style="color:var(--emerald)">—</div>
+      <div class="metric-sub">By Groq llama-3.3-70b-versatile</div>
     </div>
     <div class="metric-card red">
       <div class="metric-icon red"><i class="fa-solid fa-fire"></i></div>
@@ -215,7 +210,7 @@ td{padding:14px;font-size:13px;vertical-align:middle}
   </div>
 
   <!-- Incidents Table -->
-  <div class="panel">
+  <div class="panel" id="incidents-section">
     <div class="panel-header">
       <div>
         <div class="panel-title">Incident Registry</div>
@@ -295,14 +290,27 @@ td{padding:14px;font-size:13px;vertical-align:middle}
 <script>
 let incidents = [];
 let chart = null;
+let prsReviewed = 0;
 
-window.onload = fetchData;
+window.onload = function() {
+  fetchData();
+  // Auto-refresh every 30 seconds so new incidents from PR reviews appear automatically
+  setInterval(fetchData, 30000);
+};
 
 async function fetchData() {
   try {
     const res = await fetch('/incidents');
     const data = await res.json();
     incidents = data.incidents || [];
+    // Also fetch dashboard stats for PRs reviewed
+    try {
+      const statsRes = await fetch('/dashboard', {headers:{'Accept':'application/json'}});
+      if(statsRes.ok) {
+        const stats = await statsRes.json();
+        prsReviewed = stats.prs_reviewed || 0;
+      }
+    } catch(e) {}
     updateMetrics();
     renderTable(incidents);
     renderChart();
@@ -313,7 +321,7 @@ function updateMetrics() {
   const critical = incidents.filter(i => i.severity === 'critical' || i.severity === 'high').length;
   document.getElementById('stat-total').textContent = incidents.length;
   document.getElementById('stat-critical').textContent = critical;
-  document.getElementById('stat-prs').textContent = incidents.length + 12;
+  document.getElementById('stat-prs').textContent = prsReviewed;
 }
 
 function severityBadge(s) {

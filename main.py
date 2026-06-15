@@ -37,8 +37,6 @@ app = FastAPI(
 
 PR_TRIGGER_ACTIONS = {"opened", "synchronize", "reopened"}
 
-REVIEWS_COUNT = 0
-
 
 
 @app.get("/")
@@ -190,12 +188,12 @@ async def get_dashboard(request: Request):
                     "created_at": incident.created_at.isoformat() if incident.created_at else None
                 })
             
-            global REVIEWS_COUNT
+        global_reviews = database.get_counter("prs_reviewed")
             return JSONResponse(content={
                 "total_incidents": len(incidents_list),
                 "incidents": incidents_list,
-                "prs_reviewed": REVIEWS_COUNT,
-                "reviews_message": f"PRISM has reviewed {REVIEWS_COUNT} PRs so far."
+                "prs_reviewed": global_reviews,
+                "reviews_message": f"PRISM has reviewed {global_reviews} PRs so far."
             })
 
         template_path = os.path.join(os.path.dirname(__file__), "templates", "dashboard.html")
@@ -430,9 +428,8 @@ async def github_webhook(request: Request):
                     except Exception as db_err:
                         print(f"[PRISM] ❌ Failed to auto-log incident: {db_err}")
 
-                # Increment reviewed PRs counter
-                global REVIEWS_COUNT
-                REVIEWS_COUNT += 1
+                # Increment reviewed PRs counter (persisted in PostgreSQL)
+                database.increment_counter("prs_reviewed")
 
             except Exception as exc:
                 print(f"[PRISM] ❌ Error reviewing PR #{pr_number}: {exc}")
