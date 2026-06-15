@@ -1,26 +1,54 @@
-# PRISM 🔍
+# 🔍 PRISM: AI-Powered Code Review Bot with Incident Memory
 
-**PRISM** is an AI-powered GitHub Pull Request code review bot. It automatically analyzes pull request diffs and posts intelligent, context-aware review comments using Groq.
-
----
-
-## Features
-
-- 🤖 AI-driven code review powered by **Groq (Llama 3.3)**
-- 🔗 Integrates with the **GitHub API** to fetch PR diffs and post comments
-- ⚡ Built with **FastAPI** for a fast, async webhook server
-- 🔒 Secure token-based authentication for GitHub and Groq
+> **Catch recurring production bugs before they reach main.** PRISM is a context-aware pull request code review bot that uses vector search (ChromaDB) to recall past incidents and leverages Groq's Llama 3 models to perform deep, incident-guided PR analysis.
 
 ---
 
-## Project Structure
+## 💡 The Core Innovation
+
+Standard LLM code reviewers evaluate code in isolation, missing the context of your team's historical bugs and past postmortems. **PRISM is different.** 
+
+Every time a production incident is resolved and logged in your system, PRISM:
+1. Stores the details (root cause, fix, and postmortem link) in **PostgreSQL** (or SQLite fallback).
+2. Embeds the semantic content in a **Chroma Vector Database**.
+3. Upon receiving a new GitHub PR webhook, searches ChromaDB for incidents matching the code diff and instructs Groq to explicitly warn the reviewer if the incoming code resembles a past regression.
+
+---
+
+## 🗺️ Documentation Deep-Dive
+
+To make it easy for judges and developers to explore PRISM, we have structured our documentation into specialized guides:
+
+* 📖 **[Project Overview](./PROJECT_OVERVIEW.md)**: Details the problem, our incident-memory solution, key differentiators, and the future scope of the project.
+* ⚙️ **[System Architecture](./SYSTEM_ARCHITECTURE.md)**: Deep dive into the data flow, Mermaid architecture diagrams, database schemas, and async FastAPI design.
+* 🚀 **[Sample Demo Guide](./SAMPLE_DEMO.md)**: Run our automated verification suite (`test_prism.py`) and view the local interactive dashboard in under 2 minutes.
+
+---
+
+## ⚡ Key Features
+
+* **🤖 Context-Aware AI Review:** Leverages Groq (`llama3-70b-8192`) to check pull request diffs for bugs, safety vulnerabilities, and performance anomalies.
+* **🧠 Long-Term Semantic memory:** Automatically retrieves and attaches relevant historical incident contexts to the LLM prompt.
+* **📊 Visual Memory Dashboard:** Includes an elegant web interface (`/dashboard`) showing total incidents, reviewed PRs counter, and database records.
+* **🔌 Flexible Database Fallback:** Connects to PostgreSQL in production and gracefully falls back to local SQLite databases for zero-configuration testing.
+* **🐙 GitHub Webhook Ready:** Built with async FastAPI to listen for incoming GitHub `pull_request` events (`opened`, `synchronize`, `reopened`) and instantly post comments.
+
+---
+
+## 📂 Project Structure
 
 ```
-prism/
-├── main.py           # FastAPI application entry point
-├── requirements.txt  # Python dependencies
-├── .env              # Environment variables (secrets — do not commit)
-└── README.md         # Project documentation
+PRISM/
+├── main.py            # FastAPI Application & Webhook endpoint
+├── database.py        # SQLAlchemy & Database Operations (PostgreSQL/SQLite)
+├── memory.py          # Chroma Vector DB Embeddings & RAG Search
+├── test_prism.py      # Automated Verification Script
+├── requirements.txt   # Python Dependencies
+├── .env               # Environment placeholders
+├── README.md          # Main Documentation Entry
+├── PROJECT_OVERVIEW.md# Detailed Project Overview
+├── SYSTEM_ARCHITECTURE.md # System Design & Diagram
+└── SAMPLE_DEMO.md     # Setup & Walkthrough
 ```
 # 🏗️ System Architecture
 
@@ -53,70 +81,59 @@ Interactive FastAPI documentation exposing incident management, memory retrieval
 ![API](docs/api.png)
 ---
 
-## Setup
+## 🚀 Quick Local Setup
 
-### 1. Clone the repository
-
-```bash
-git clone <your-repo-url>
-cd prism
-```
-
-### 2. Create and activate a virtual environment
+### 1. Clone & Set Up Environment
 
 ```bash
+# Clone the repository
+git clone https://github.com/piyush0706/PRISM.git
+cd PRISM
+
+# Create and activate virtual environment
 python -m venv venv
-source venv/bin/activate  # macOS/Linux
+venv\Scripts\activate  # On Windows
+# source venv/bin/activate  # On macOS/Linux
 ```
 
-### 3. Install dependencies
+### 2. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure environment variables
-
-Fill in your credentials in the `.env` file:
-
+### 3. Configure `.env`
+Create a `.env` file in the root folder with the following keys:
 ```env
 GITHUB_TOKEN=your_github_personal_access_token
 GROQ_API_KEY=your_groq_api_key
+DATABASE_URL=postgresql://username:password@localhost:5432/prism  # Optional fallback to SQLite
 ```
 
-> ⚠️ **Never commit your `.env` file.** Add it to `.gitignore`.
-
-### 5. Run the server
-
+### 4. Run the Verification Test
+You don't need a live webhook or live database connection to test. Run our pre-packaged local integration suite:
 ```bash
-uvicorn main:app --reload
+python test_prism.py
 ```
 
-The API will be available at `http://localhost:8000`.
+### 5. Start the Live Server & Dashboard
+```bash
+python main.py
+```
+Open **[http://localhost:8080/dashboard](http://localhost:8080/dashboard)** in your browser to view the interactive incident memory dashboard.
 
 ---
 
-## API Endpoints
+## 🛠️ Tech Stack
 
-| Method | Endpoint | Description             |
-|--------|----------|-------------------------|
-| GET    | `/`      | Health check            |
-
-*(More endpoints to be added as the bot logic is implemented.)*
-
----
-
-## Tech Stack
-
-| Technology          | Purpose                          |
-|---------------------|----------------------------------|
-| FastAPI             | Async web server / webhook handler |
-| Uvicorn             | ASGI server                      |
-| HTTPX               | Async HTTP client for GitHub API and Groq |
-| python-dotenv       | Environment variable management  |
+* **Language:** Python 3.11+
+* **Framework:** FastAPI (Uvicorn ASGI server)
+* **Databases:** PostgreSQL (SQLAlchemy ORM) & ChromaDB (Vector DB)
+* **LLM Engine:** Groq API (Llama-3-70b)
+* **Libraries:** HTTPX (async REST client), Pydantic (data parsing), python-dotenv
 
 ---
 
-## License
+## 🛡️ License
 
-MIT
+PRISM is distributed under the MIT License. See `LICENSE` for details.
