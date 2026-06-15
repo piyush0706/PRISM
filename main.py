@@ -46,6 +46,27 @@ async def root():
     """Redirect to the dashboard by default."""
     return RedirectResponse(url="/dashboard")
 
+
+# =========================================
+# Health Check Endpoint
+# Verifies server + database connectivity
+# =========================================
+@app.get("/health")
+async def health_check():
+    """
+    Returns the live health status of PRISM and its dependencies.
+    Useful for judges, Render health checks, and uptime monitors.
+    """
+    db_status = database.get_db_status()
+    return JSONResponse(content={
+        "status": "ok",
+        "service": "PRISM AI Code Review Bot",
+        "version": "1.0.0",
+        "database": db_status,
+        "groq_configured": bool(os.getenv("GROQ_API_KEY")),
+        "github_configured": bool(os.getenv("GITHUB_TOKEN")),
+    })
+
 # =========================================
 # Incident Storage Layer
 # Stores production incidents and postmortems
@@ -98,393 +119,89 @@ async def create_new_incident(incident: IncidentCreate):
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
-# =========================================
-# Dashboard & Analytics Layer
-# Visualizes incident memory and review stats
-# =========================================
-DASHBOARD_HTML_TEMPLATE = """<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRISM - Memory Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #0b0f19;
-            --card-bg: rgba(17, 24, 39, 0.7);
-            --border-color: rgba(255, 255, 255, 0.08);
-            --primary: #6366f1;
-            --primary-glow: rgba(99, 102, 241, 0.15);
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            
-            --critical: #ef4444;
-            --high: #f97316;
-            --medium: #eab308;
-            --low: #10b981;
-        }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.1) 0px, transparent 50%);
-        }
-        
-        header {
-            padding: 2.5rem 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .logo-icon {
-            font-size: 2rem;
-            background: linear-gradient(135deg, #6366f1, #a855f7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 800;
-        }
-        
-        .logo-text h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: -0.025em;
-        }
-        
-        .logo-text p {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-        
-        .status-badge {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            color: #34d399;
-            padding: 0.5rem 1rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-        
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #10b981;
-            border-radius: 50%;
-            box-shadow: 0 0 12px #10b981;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-        
-        main {
-            flex: 1;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 2.5rem 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2.5rem;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-        }
-        
-        .stat-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 1.5rem;
-            backdrop-filter: blur(12px);
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(99, 102, 241, 0.3);
-            box-shadow: 0 12px 24px -10px var(--primary-glow);
-        }
-        
-        .stat-label {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-        
-        .stat-val {
-            font-size: 2.25rem;
-            font-weight: 700;
-            letter-spacing: -0.05em;
-        }
-        
-        .stat-desc {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-        
-        .table-section {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 1.75rem;
-            backdrop-filter: blur(12px);
-        }
-        
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-        
-        .section-title h2 {
-            font-size: 1.25rem;
-            font-weight: 700;
-        }
-        
-        .section-title p {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-        }
-        
-        .incidents-table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-        
-        .incidents-table th {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-        
-        .incidents-table td {
-            padding: 1.25rem 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            font-size: 0.95rem;
-        }
-        
-        .incidents-table tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .severity-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.25rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-        
-        .severity-critical { background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
-        .severity-high { background: rgba(249, 115, 22, 0.12); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.2); }
-        .severity-medium { background: rgba(234, 179, 8, 0.12); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.2); }
-        .severity-low { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
-        
-        .empty-state {
-            padding: 4rem 2rem;
-            text-align: center;
-            color: var(--text-muted);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .empty-icon {
-            font-size: 3rem;
-            opacity: 0.5;
-        }
-        
-        footer {
-            padding: 2rem;
-            text-align: center;
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            border-top: 1px solid var(--border-color);
-            margin-top: auto;
-        }
-        
-        .id-cell {
-            font-family: monospace;
-            color: var(--primary);
-            font-weight: 600;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="logo-container">
-            <div class="logo-icon">PRISM</div>
-            <div class="logo-text">
-                <h1>Incident Memory System</h1>
-                <p>GitHub PR Risk Prevention</p>
-            </div>
-        </div>
-        <div class="status-badge">
-            <div class="status-dot"></div>
-            SYSTEM ACTIVE
-        </div>
-    </header>
-    
-    <main>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <span class="stat-label">Total Incidents Stored</span>
-                <span class="stat-val">{total_incidents}</span>
-                <span class="stat-desc">Structured & Vectorized memory size</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">Pull Requests Reviewed</span>
-                <span class="stat-val">{prs_reviewed}</span>
-                <span class="stat-desc">Total processed since startup</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">System Memory State</span>
-                <span class="stat-val" style="color: #6366f1; font-size: 1.75rem; padding-top: 0.5rem;">Synchronized</span>
-                <span class="stat-desc">SQL & Chroma in-sync</span>
-            </div>
-        </div>
-        
-        <div class="table-section">
-            <div class="section-header">
-                <div class="section-title">
-                    <h2>Logged Production Incidents</h2>
-                    <p>Database of historical bugs utilized during pull request analysis</p>
-                </div>
-            </div>
-            
-            {table_content}
-        </div>
-    </main>
-    
-    <footer>
-        <p>&copy; 2026 PRISM — AI Incident Memory & PR Prevention System. All rights reserved.</p>
-    </footer>
-</body>
-</html>"""
 
-# =========================================
-# Dashboard API
-# =========================================
-@app.get("/dashboard")
-async def get_dashboard(request: Request):
+@app.get("/incidents")
+async def get_all_incidents_endpoint():
     """
-    Returns statistics and a list of all logged incidents,
-    as well as the total count of PRs reviewed. Served as HTML for browser,
-    or JSON for programmatic queries.
+    Fetches all incidents from PostgreSQL and returns them as a JSON list.
     """
     try:
-        # Fetch all incidents from PostgreSQL/SQLite
         all_incidents = database.get_all_incidents()
-        
-        # Serialize to include only id, title, severity, created_at
         incidents_list = []
         for incident in all_incidents:
             incidents_list.append({
                 "id": incident.id,
                 "title": incident.title,
                 "severity": incident.severity,
+                "root_cause": incident.root_cause,
+                "fix": incident.fix,
+                "postmortem": incident.postmortem,
+                "affected_components": incident.affected_components,
                 "created_at": incident.created_at.isoformat() if incident.created_at else None
             })
-            
-        global REVIEWS_COUNT
+        return {"incidents": incidents_list}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.delete("/incidents/{incident_id}")
+async def delete_incident_endpoint(incident_id: int):
+    """
+    Deletes an incident from PostgreSQL and the Chroma DB collection by ID.
+    """
+    try:
+        deleted = database.delete_incident(incident_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Incident not found")
         
+        # Also remove from Chroma DB
+        memory.delete_incident(str(incident_id))
+        
+        return {"status": "success", "message": f"Incident {incident_id} successfully deleted"}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+# =========================================
+# Dashboard & Analytics Layer
+# Visualizes incident memory and review stats
+# =========================================
+@app.get("/dashboard")
+async def get_dashboard(request: Request):
+    """
+    Serves the premium HTML dashboard template from templates/dashboard.html.
+    If programmatic client accepts JSON, returns stats and list of incidents.
+    """
+    try:
         accept = request.headers.get("accept", "")
         if "text/html" not in accept:
-            # Return JSON for programmatic requests (like curl)
+            all_incidents = database.get_all_incidents()
+            incidents_list = []
+            for incident in all_incidents:
+                incidents_list.append({
+                    "id": incident.id,
+                    "title": incident.title,
+                    "severity": incident.severity,
+                    "root_cause": incident.root_cause,
+                    "fix": incident.fix,
+                    "postmortem": incident.postmortem,
+                    "affected_components": incident.affected_components,
+                    "created_at": incident.created_at.isoformat() if incident.created_at else None
+                })
+            
+            global REVIEWS_COUNT
             return JSONResponse(content={
                 "total_incidents": len(incidents_list),
                 "incidents": incidents_list,
                 "prs_reviewed": REVIEWS_COUNT,
                 "reviews_message": f"PRISM has reviewed {REVIEWS_COUNT} PRs so far."
             })
-            
-        # Format HTML Table Content
-        if incidents_list:
-            rows = ""
-            for inc in incidents_list:
-                severity_class = f"severity-{inc['severity'].lower()}"
-                rows += f"""
-                <tr>
-                    <td class="id-cell">#{inc['id']}</td>
-                    <td><strong>{inc['title']}</strong></td>
-                    <td><span class="severity-badge {severity_class}">{inc['severity']}</span></td>
-                    <td>{inc['created_at'][:19].replace('T', ' ') if inc['created_at'] else 'N/A'}</td>
-                </tr>
-                """
-            table_html = f"""
-            <table class="incidents-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Incident Title</th>
-                        <th>Severity</th>
-                        <th>Log Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows}
-                </tbody>
-            </table>
-            """
-        else:
-            table_html = """
-            <div class="empty-state">
-                <div class="empty-icon">📂</div>
-                <p>No incidents registered yet. Log an incident to populate the memory database.</p>
-            </div>
-            """
-            
-        html_content = DASHBOARD_HTML_TEMPLATE \
-            .replace("{total_incidents}", str(len(incidents_list))) \
-            .replace("{prs_reviewed}", str(REVIEWS_COUNT)) \
-            .replace("{table_content}", table_html)
+
+        template_path = os.path.join(os.path.dirname(__file__), "templates", "dashboard.html")
+        with open(template_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
         return HTMLResponse(content=html_content)
-        
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
@@ -590,6 +307,7 @@ async def post_github_comment(repo: str, pr_number: int, review: str, similar_in
 async def review_with_groq(diff: str, incidents: list[str]) -> str:
     """
     Send a PR diff and memory incidents to Groq and return an AI-generated code review.
+    Instructs the AI to output critical incidents inside a <prism_incident> XML tag.
     """
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
@@ -598,26 +316,32 @@ async def review_with_groq(diff: str, incidents: list[str]) -> str:
     from groq import AsyncGroq
     client = AsyncGroq(api_key=api_key)
 
+    incidents_section = ""
     if incidents:
-        incidents_section = "PAST INCIDENTS FROM OUR SYSTEM:\n" + "\n\n".join(incidents)
-        prompt = (
-            "You are a senior code reviewer with memory of past incidents.\n\n"
-            f"{incidents_section}\n\n"
-            "Using the above incidents as context, review this PR diff.\n"
-            "Find: bugs, missing validation, security issues, performance problems.\n"
-            "If this PR resembles a past incident, explicitly warn about it.\n"
-            "Be concise. Use bullet points.\n\n"
-            f"PR DIFF:\n{diff}"
-        )
-    else:
-        prompt = (
-            "You are a senior code reviewer with memory of past incidents.\n\n"
-            "Using the above incidents as context, review this PR diff.\n"
-            "Find: bugs, missing validation, security issues, performance problems.\n"
-            "If this PR resembles a past incident, explicitly warn about it.\n"
-            "Be concise. Use bullet points.\n\n"
-            f"PR DIFF:\n{diff}"
-        )
+        incidents_section = "PAST INCIDENTS FROM OUR SYSTEM:\n" + "\n\n".join(incidents) + "\n\n"
+
+    prompt = (
+        "You are a senior code reviewer with memory of past incidents.\n\n"
+        f"{incidents_section}"
+        "Using any past incidents as context, review this PR diff.\n"
+        "Find: bugs, missing validation, security issues, performance problems.\n"
+        "If this PR resembles a past incident, explicitly warn about it.\n"
+        "Be concise. Use bullet points.\n\n"
+        "CRITICAL AUTO-LOGGING REQUIREMENT:\n"
+        "If and only if you find any CRITICAL or HIGH severity security vulnerabilities, data leaks, or fatal bugs in the PR diff, "
+        "you must output a structured JSON block wrapped inside '<prism_incident>' and '</prism_incident>' tags at the very bottom of your response. "
+        "Otherwise, do not include the tag.\n"
+        "The JSON block must have this format:\n"
+        "{\n"
+        "  \"title\": \"Short clear title of the vulnerability/bug found\",\n"
+        "  \"severity\": \"critical\" or \"high\",\n"
+        "  \"root_cause\": \"Technical cause of the issue\",\n"
+        "  \"fix\": \"Specific recommended code fix\",\n"
+        "  \"postmortem\": \"Actionable prevention advice to avoid this in the future\",\n"
+        "  \"affected_components\": \"Comma-separated names of files or modules affected\"\n"
+        "}\n\n"
+        f"PR DIFF:\n{diff}"
+    )
 
     completion = await client.chat.completions.create(
         model="llama3-70b-8192",
@@ -660,11 +384,51 @@ async def github_webhook(request: Request):
                 similar_incidents = memory.search_similar_incidents(diff, n_results=3)
 
                 print(f"[PRISM] Found {len(similar_incidents)} similar incidents. Sending to Groq...")
-                review = await review_with_groq(diff, similar_incidents)
+                review_content = await review_with_groq(diff, similar_incidents)
+
+                # Parse and extract structured incident if present
+                incident_data = None
+                clean_review = review_content
+                if "<prism_incident>" in review_content and "</prism_incident>" in review_content:
+                    try:
+                        start_idx = review_content.find("<prism_incident>") + len("<prism_incident>")
+                        end_idx = review_content.find("</prism_incident>")
+                        json_str = review_content[start_idx:end_idx].strip()
+                        
+                        import json
+                        incident_data = json.loads(json_str)
+                        
+                        # Strip the tag from the posted comment so the user doesn't see raw JSON
+                        clean_review = review_content[:review_content.find("<prism_incident>")].strip()
+                    except Exception as parse_err:
+                        print(f"[PRISM] ⚠️ Failed to parse auto-incident JSON: {parse_err}")
 
                 print(f"[PRISM] Groq review received. Posting comment...")
-                await post_github_comment(repo_full_name, pr_number, review, similar_incidents)
+                await post_github_comment(repo_full_name, pr_number, clean_review, similar_incidents)
                 print(f"[PRISM] ✅ Review posted on PR #{pr_number} in {repo_full_name}")
+
+                # If an incident was detected, save it!
+                if incident_data:
+                    try:
+                        saved_inc = database.create_incident(
+                            title=incident_data.get("title", "AI Auto-Logged Incident"),
+                            severity=incident_data.get("severity", "high"),
+                            root_cause=incident_data.get("root_cause", ""),
+                            fix=incident_data.get("fix", ""),
+                            postmortem=incident_data.get("postmortem", ""),
+                            affected_components=incident_data.get("affected_components", "")
+                        )
+                        # Also embed it in Chroma
+                        memory.embed_incident(
+                            id=str(saved_inc.id),
+                            title=saved_inc.title,
+                            root_cause=saved_inc.root_cause,
+                            fix=saved_inc.fix,
+                            postmortem=saved_inc.postmortem
+                        )
+                        print(f"[PRISM] 🤖 Automatically logged critical incident #{saved_inc.id} to DB & Chroma!")
+                    except Exception as db_err:
+                        print(f"[PRISM] ❌ Failed to auto-log incident: {db_err}")
 
                 # Increment reviewed PRs counter
                 global REVIEWS_COUNT
