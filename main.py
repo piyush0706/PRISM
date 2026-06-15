@@ -1,6 +1,17 @@
 """
-PRISM - AI-Powered GitHub PR Code Review Bot
-FastAPI application entry point.
+=========================================================
+PRISM
+AI-Powered PR Reviewer with Organizational Memory
+
+Core Features:
+- GitHub Webhook Integration
+- Incident Storage Layer
+- ChromaDB Memory Retrieval
+- Groq-Powered Risk Analysis
+- Dashboard & Analytics
+
+Built for OSC AI Build 1.0
+=========================================================
 """
 
 import os
@@ -9,7 +20,7 @@ import httpx
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
 
 import database
@@ -32,10 +43,13 @@ REVIEWS_COUNT = 0
 
 @app.get("/")
 async def root():
-    """Health check endpoint."""
-    return {"status": "ok", "service": "PRISM - PR Review Bot"}
+    """Redirect to the dashboard by default."""
+    return RedirectResponse(url="/dashboard")
 
-
+# =========================================
+# Incident Storage Layer
+# Stores production incidents and postmortems
+# =========================================
 class IncidentCreate(BaseModel):
     title: str
     severity: str
@@ -84,7 +98,10 @@ async def create_new_incident(incident: IncidentCreate):
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
-
+# =========================================
+# Dashboard & Analytics Layer
+# Visualizes incident memory and review stats
+# =========================================
 DASHBOARD_HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -390,7 +407,9 @@ DASHBOARD_HTML_TEMPLATE = """<!DOCTYPE html>
 </body>
 </html>"""
 
-
+# =========================================
+# Dashboard API
+# =========================================
 @app.get("/dashboard")
 async def get_dashboard(request: Request):
     """
@@ -472,10 +491,10 @@ async def get_dashboard(request: Request):
 
 
 
-# ---------------------------------------------------------------------------
-# GitHub API helpers
-# ---------------------------------------------------------------------------
-
+# =========================================
+# GitHub Integration Layer
+# Fetches PR diffs and posts AI reviews
+# =========================================
 GITHUB_API_BASE = "https://api.github.com"
 
 
@@ -564,10 +583,10 @@ async def post_github_comment(repo: str, pr_number: int, review: str, similar_in
         )
 
 
-# ---------------------------------------------------------------------------
-# Groq AI helpers
-# ---------------------------------------------------------------------------
-
+# =========================================
+# AI Review Engine
+# Memory-Augmented Risk Analysis using Groq
+# =========================================
 async def review_with_groq(diff: str, incidents: list[str]) -> str:
     """
     Send a PR diff and memory incidents to Groq and return an AI-generated code review.
@@ -612,7 +631,10 @@ async def review_with_groq(diff: str, incidents: list[str]) -> str:
     )
     return completion.choices[0].message.content
 
-
+# =========================================
+# Webhook Processing Pipeline
+# Entry point for GitHub Pull Requests
+# =========================================
 @app.post("/webhook")
 async def github_webhook(request: Request):
     """
@@ -653,7 +675,9 @@ async def github_webhook(request: Request):
 
     return {"status": "ok"}
 
-
+# =========================================
+# Application Entry Point
+# =========================================
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8080))

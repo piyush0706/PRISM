@@ -19,9 +19,8 @@ try:
     # Test connection
     with engine.connect() as conn:
         pass
-except Exception as e:
-    print(f"[PRISM] Warning: Connection to database '{DATABASE_URL}' failed: {e}")
-    print("[PRISM] Falling back to local SQLite database: 'sqlite:///./prism.db'")
+except Exception:
+    print("[PRISM] Database: PostgreSQL connection refused. Falling back to local SQLite database.")
     DATABASE_URL = "sqlite:///./prism.db"
     connect_args = {"check_same_thread": False}
     engine = create_engine(DATABASE_URL, connect_args=connect_args)
