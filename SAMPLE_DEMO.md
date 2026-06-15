@@ -1,8 +1,21 @@
 # 🚀 PRISM: Quickstart Demo Guide
 
-This guide walks you through verifying and demonstrating the features of PRISM. You can test it locally using two methods:
-1. **Automated Console Integration Test:** Runs the entire database-to-AI pipeline in a single terminal command.
-2. **Interactive Live Dashboard Demo:** Runs the FastAPI web application, opens the interactive Web UI dashboard, and processes REST API queries.
+This guide walks you through verifying and demonstrating the features of PRISM.
+
+---
+
+## 🌐 Option 0: View the Live Deployed App (No Setup Required)
+
+The fastest way to evaluate PRISM is to visit the live production deployment on Render:
+
+| Endpoint | URL |
+|---|---|
+| **Dashboard UI** | https://prism-ldxm.onrender.com/dashboard |
+| **Health Check** | https://prism-ldxm.onrender.com/health |
+| **Swagger API Docs** | https://prism-ldxm.onrender.com/docs |
+| **Incidents JSON** | https://prism-ldxm.onrender.com/incidents |
+
+The `/health` endpoint instantly confirms that the server, PostgreSQL database, Groq API, and GitHub token are all live and operational.
 
 ---
 
@@ -60,13 +73,29 @@ python main.py
 ```
 *The server will start running on port `8080` (`http://localhost:8080`).*
 
-### 2. Open the Memory Dashboard
+### 2. Check the Health Endpoint
+Before opening the dashboard, confirm all services are running:
+```bash
+curl http://localhost:8080/health
+```
+Expected response:
+```json
+{
+  "status": "ok",
+  "database": {"status": "connected", "db_type": "SQLite"},
+  "groq_configured": true,
+  "github_configured": true
+}
+```
+
+### 3. Open the Memory Dashboard
 Open your browser and navigate to: **[http://localhost:8080/dashboard](http://localhost:8080/dashboard)**
 
 You will see:
-* **Interactive Counters:** Track total incident records and total analyzed pull requests.
-* **Incidents Registry Table:** A stylized grid displaying ID, Title, Severity, and Log date.
-* **Sync Health Indicator:** Shows whether SQL storage and Vector memory are operational.
+* **Stat Cards:** Total Reviews, Critical/High Issues, Medium Issues, and Active Incidents counters.
+* **Severity Distribution Chart:** A bar chart breaking down incidents by severity level.
+* **System Integration Status:** Live pinging indicators for FastAPI Server, PostgreSQL Database, and Groq Inference Engine.
+* **Incidents Log Table:** Searchable grid displaying ID, Severity badge, Title, Affected Components, and timestamp.
 
 ---
 

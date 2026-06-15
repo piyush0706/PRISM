@@ -1,456 +1,429 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRISM - AI Code Review Dashboard</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts (Outfit & Inter) -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        outfit: ['Outfit', 'sans-serif'],
-                        inter: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at top right, rgba(16, 24, 48, 0.95), rgba(7, 10, 19, 1));
-        }
-        .glass-panel {
-            background: rgba(17, 24, 39, 0.55);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .neon-text-blue {
-            text-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRISM — AI Code Review Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#050816;--bg2:#0B1023;--card:rgba(255,255,255,0.04);
+  --border:rgba(255,255,255,0.08);--purple:#7C5CFF;--emerald:#00D084;
+  --text:#E2E8F0;--muted:#64748B;--red:#FF4D6D;--orange:#FF8C42;--yellow:#FFD166;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow-x:hidden}
+/* Sidebar */
+.sidebar{width:220px;min-height:100vh;background:rgba(11,16,35,0.9);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0;position:fixed;top:0;left:0;z-index:50}
+.sidebar-logo{padding:0 20px 28px;border-bottom:1px solid var(--border)}
+.logo-badge{background:linear-gradient(135deg,var(--purple),#9B8AFF);width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;margin-bottom:10px}
+.logo-title{font-size:17px;font-weight:700;background:linear-gradient(90deg,#fff,#A78BFA);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.nav-section{padding:16px 12px 8px;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-right:2px solid transparent;transition:all .2s}
+.nav-item:hover{color:var(--text);background:rgba(124,92,255,.08)}
+.nav-item.active{color:#fff;background:rgba(124,92,255,.15);border-right-color:var(--purple)}
+.nav-item i{width:16px;text-align:center;font-size:13px}
+.sidebar-footer{margin-top:auto;padding:16px 20px;border-top:1px solid var(--border)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--emerald);display:inline-block;margin-right:6px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* Main */
+.main{margin-left:220px;flex:1;padding:32px 36px;max-width:1200px}
+/* Header */
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:36px}
+.page-title{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.page-title span{background:linear-gradient(90deg,var(--purple),var(--emerald));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-actions{display:flex;gap:10px;align-items:center}
+.badge-live{background:rgba(0,208,132,.12);border:1px solid rgba(0,208,132,.25);color:var(--emerald);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;display:flex;align-items:center;gap:6px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,var(--purple),#9B8AFF);color:#fff}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-ghost{background:var(--card);border:1px solid var(--border);color:var(--text)}
+.btn-ghost:hover{border-color:var(--purple);color:var(--purple)}
+/* Metric cards */
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:28px}
+.metric-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;position:relative;overflow:hidden;transition:border-color .25s,transform .25s}
+.metric-card:hover{border-color:rgba(124,92,255,.4);transform:translateY(-2px)}
+.metric-card::before{content:'';position:absolute;top:0;right:0;width:80px;height:80px;border-radius:50%;filter:blur(40px);opacity:.25}
+.metric-card.purple::before{background:var(--purple)}
+.metric-card.emerald::before{background:var(--emerald)}
+.metric-card.red::before{background:var(--red)}
+.metric-label{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em}
+.metric-value{font-size:38px;font-weight:800;letter-spacing:-1px;line-height:1}
+.metric-sub{font-size:12px;color:var(--muted);margin-top:8px}
+.metric-icon{position:absolute;top:22px;right:22px;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.metric-icon.purple{background:rgba(124,92,255,.15);color:var(--purple)}
+.metric-icon.emerald{background:rgba(0,208,132,.15);color:var(--emerald)}
+.metric-icon.red{background:rgba(255,77,109,.15);color:var(--red)}
+/* Panel */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;margin-bottom:22px}
+.panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.panel-title{font-size:15px;font-weight:700}
+.panel-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.search-bar{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:10px;padding:7px 14px;font-size:13px;color:var(--text);min-width:220px;transition:border-color .2s}
+.search-bar:focus-within{border-color:var(--purple)}
+.search-bar input{background:none;border:none;outline:none;color:var(--text);font-size:13px;width:100%}
+.search-bar i{color:var(--muted);font-size:13px}
+/* Table */
+table{width:100%;border-collapse:collapse}
+thead tr{border-bottom:1px solid var(--border)}
+th{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding:8px 14px;text-align:left}
+tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s}
+tbody tr:hover{background:rgba(124,92,255,.06)}
+tbody tr:last-child{border-bottom:none}
+td{padding:14px;font-size:13px;vertical-align:middle}
+.severity-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;letter-spacing:.03em}
+.sev-critical{background:rgba(255,77,109,.12);color:var(--red);border:1px solid rgba(255,77,109,.2)}
+.sev-high{background:rgba(255,140,66,.12);color:var(--orange);border:1px solid rgba(255,140,66,.2)}
+.sev-medium{background:rgba(255,209,102,.12);color:var(--yellow);border:1px solid rgba(255,209,102,.2)}
+.sev-low{background:rgba(124,92,255,.12);color:#A78BFA;border:1px solid rgba(124,92,255,.2)}
+.action-btn{background:none;border:none;cursor:pointer;color:var(--muted);padding:5px 8px;border-radius:6px;font-size:13px;transition:all .2s}
+.action-btn:hover{background:rgba(255,77,109,.12);color:var(--red)}
+/* Empty state */
+.empty-state{text-align:center;padding:60px 20px}
+.empty-icon{width:64px;height:64px;background:rgba(124,92,255,.1);border:1px solid rgba(124,92,255,.2);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;color:var(--purple)}
+.empty-title{font-size:16px;font-weight:600;margin-bottom:6px}
+.empty-sub{font-size:13px;color:var(--muted);max-width:320px;margin:0 auto 20px}
+/* System status cards */
+.status-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.status-card{background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;justify-content:space-between;align-items:center}
+.status-name{font-size:13px;font-weight:500}
+.status-ok{color:var(--emerald);font-size:11px;font-weight:600;display:flex;align-items:center;gap:5px}
+/* Chart container */
+.chart-wrap{height:200px;position:relative}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#0D1528;border:1px solid var(--border);border-radius:20px;width:100%;max-width:520px;padding:28px;margin:16px}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.modal-title{font-size:17px;font-weight:700}
+.close-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:4px;transition:color .2s}
+.close-btn:hover{color:var(--text)}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
+.form-input{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--purple)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}
+/* Glow effects */
+.glow-purple{box-shadow:0 0 30px rgba(124,92,255,.08)}
+.glow-emerald{box-shadow:0 0 30px rgba(0,208,132,.08)}
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .4s ease forwards}
+.fade-up-2{animation:fadeUp .5s .1s ease both}
+.fade-up-3{animation:fadeUp .5s .2s ease both}
+</style>
 </head>
-<body class="text-slate-100 min-h-screen font-inter antialiased">
+<body>
 
-    <!-- Top Navigation Bar -->
-    <nav class="glass-panel sticky top-0 z-50 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                <i class="fa-solid fa-wand-magic-sparkles text-white text-lg"></i>
-            </div>
-            <div>
-                <h1 class="text-xl font-bold font-outfit tracking-wide bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">PRISM</h1>
-                <p class="text-xs text-slate-400">AI Code Review & Security Gatekeeper</p>
-            </div>
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-badge">P</div>
+    <div class="logo-title">PRISM</div>
+    <div class="logo-sub">AI Code Review Intelligence</div>
+  </div>
+  <div class="nav-section">Main</div>
+  <div class="nav-item active"><i class="fa-solid fa-gauge-high"></i> Dashboard</div>
+  <div class="nav-item"><i class="fa-solid fa-triangle-exclamation"></i> Incidents</div>
+  <div class="nav-item"><i class="fa-solid fa-brain"></i> Memory</div>
+  <div class="nav-item"><i class="fa-solid fa-chart-line"></i> Analytics</div>
+  <div class="nav-section">System</div>
+  <div class="nav-item"><i class="fa-solid fa-plug"></i> Integrations</div>
+  <div class="nav-item"><i class="fa-solid fa-gear"></i> Settings</div>
+  <div class="sidebar-footer">
+    <span class="status-dot"></span>
+    <span style="font-size:12px;color:var(--muted)">All systems operational</span>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<main class="main">
+
+  <!-- Header -->
+  <div class="header fade-up">
+    <div>
+      <div class="page-title">Incident <span>Intelligence</span></div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px">Monitor, analyze, and resolve code review incidents</div>
+    </div>
+    <div class="header-actions">
+      <div class="badge-live"><span class="status-dot" style="width:6px;height:6px;margin:0"></span> Live</div>
+      <button class="btn btn-ghost" onclick="fetchData()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+      <button class="btn btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> New Incident</button>
+    </div>
+  </div>
+
+  <!-- Metric Cards -->
+  <div class="metrics fade-up-2">
+    <div class="metric-card purple glow-purple">
+      <div class="metric-icon purple"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="metric-label">Total Incidents</div>
+      <div class="metric-value" id="stat-total" style="color:#A78BFA">0</div>
+      <div class="metric-sub">Stored in PostgreSQL</div>
+    </div>
+    <div class="metric-card emerald glow-emerald">
+      <div class="metric-icon emerald"><i class="fa-solid fa-code-pull-request"></i></div>
+      <div class="metric-label">PRs Reviewed</div>
+      <div class="metric-value" id="stat-prs" style="color:var(--emerald)">12</div>
+      <div class="metric-sub">By Groq Llama-3-70B</div>
+    </div>
+    <div class="metric-card red">
+      <div class="metric-icon red"><i class="fa-solid fa-fire"></i></div>
+      <div class="metric-label">Critical / High</div>
+      <div class="metric-value" id="stat-critical" style="color:var(--red)">0</div>
+      <div class="metric-sub">Requiring attention</div>
+    </div>
+  </div>
+
+  <!-- Chart + Status row -->
+  <div style="display:grid;grid-template-columns:1.8fr 1fr;gap:18px;margin-bottom:22px" class="fade-up-3">
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">Severity Distribution</div><div class="panel-sub">Incidents breakdown by severity level</div></div>
+      </div>
+      <div class="chart-wrap"><canvas id="severityChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div><div class="panel-title">System Status</div><div class="panel-sub">Live integration health</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px">
+        <div class="status-card">
+          <span class="status-name"><i class="fa-solid fa-server" style="color:var(--purple);margin-right:8px"></i>FastAPI Server</span>
+          <span class="status-ok"><span class="status-dot" style="width:6px;height:6px;margin:0"></span>Online</span>
         </div>
-        <div class="flex items-center gap-4">
-            <button onclick="openModal()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 transition-colors text-white font-medium px-4 py-2 rounded-lg text-sm shadow-lg shadow-blue-500/15">
-                <i class="fa-solid fa-plus"></i> Report Incident
-            </button>
-            <div class="text-slate-400 hover:text-slate-200 cursor-pointer">
-                <i class="fa-solid fa-circle-user text-2xl"></i>
-            </div>
+        <div class="status-card">
+          <span class="status-name"><i class="fa-solid fa-database" style="color:var(--emerald);margin-right:8px"></i>PostgreSQL</span>
+          <span class="status-ok"><span class="status-dot" style="width:6px;height:6px;margin:0"></span>Connected</span>
         </div>
-    </nav>
-
-    <!-- Main Content Container -->
-    <main class="max-w-7xl mx-auto px-6 py-8">
-
-        <!-- Stat Cards Grid -->
-        <section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <!-- Card 1 -->
-            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden transition-transform hover:-translate-y-1">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Reviews</p>
-                        <h3 id="stat-total-reviews" class="text-4xl font-bold font-outfit mt-2 neon-text-blue">0</h3>
-                    </div>
-                    <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl">
-                        <i class="fa-solid fa-magnifying-glass-chart text-xl"></i>
-                    </div>
-                </div>
-                <p class="text-xs text-slate-400 mt-4 flex items-center gap-1">
-                    <span class="text-emerald-400"><i class="fa-solid fa-arrow-trend-up"></i> Live</span> updates
-                </p>
-            </div>
-
-            <!-- Card 2 -->
-            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden transition-transform hover:-translate-y-1">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Critical / High Issues</p>
-                        <h3 id="stat-critical-high" class="text-4xl font-bold font-outfit mt-2 text-red-400">0</h3>
-                    </div>
-                    <div class="p-3 bg-red-500/10 text-red-400 rounded-xl">
-                        <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-                    </div>
-                </div>
-                <p class="text-xs text-slate-400 mt-4">Require immediate attention</p>
-            </div>
-
-            <!-- Card 3 -->
-            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden transition-transform hover:-translate-y-1">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Medium Issues</p>
-                        <h3 id="stat-medium" class="text-4xl font-bold font-outfit mt-2 text-yellow-400">0</h3>
-                    </div>
-                    <div class="p-3 bg-yellow-500/10 text-yellow-400 rounded-xl">
-                        <i class="fa-solid fa-shield-halved text-xl"></i>
-                    </div>
-                </div>
-                <p class="text-xs text-slate-400 mt-4">Code improvements recommended</p>
-            </div>
-
-            <!-- Card 4 -->
-            <div class="glass-panel rounded-2xl p-6 relative overflow-hidden transition-transform hover:-translate-y-1">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Active Incidents</p>
-                        <h3 id="stat-active" class="text-4xl font-bold font-outfit mt-2 text-emerald-400">0</h3>
-                    </div>
-                    <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
-                        <i class="fa-solid fa-circle-check text-xl"></i>
-                    </div>
-                </div>
-                <p class="text-xs text-slate-400 mt-4">Currently tracked in system</p>
-            </div>
-        </section>
-
-        <!-- Charts and Breakdown -->
-        <section class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            <div class="glass-panel rounded-2xl p-6 lg:col-span-2 flex flex-col justify-between">
-                <h3 class="text-lg font-bold font-outfit tracking-wide mb-4">Severity distribution</h3>
-                <div class="h-64 flex items-center justify-center">
-                    <canvas id="severityChart"></canvas>
-                </div>
-            </div>
-            
-            <div class="glass-panel rounded-2xl p-6 flex flex-col justify-between">
-                <h3 class="text-lg font-bold font-outfit tracking-wide mb-4">System Integration Status</h3>
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between p-3 bg-slate-900/40 rounded-xl border border-slate-800">
-                        <span class="text-sm font-medium">FastAPI Server</span>
-                        <span class="flex items-center gap-1.5 text-emerald-400 text-xs font-semibold"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>Online</span>
-                    </div>
-                    <div class="flex items-center justify-between p-3 bg-slate-900/40 rounded-xl border border-slate-800">
-                        <span class="text-sm font-medium">PostgreSQL Database</span>
-                        <span class="flex items-center gap-1.5 text-emerald-400 text-xs font-semibold"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>Connected</span>
-                    </div>
-                    <div class="flex items-center justify-between p-3 bg-slate-900/40 rounded-xl border border-slate-800">
-                        <span class="text-sm font-medium">Groq Inference Engine</span>
-                        <span class="flex items-center gap-1.5 text-emerald-400 text-xs font-semibold"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>Ready</span>
-                    </div>
-                </div>
-                <div class="text-xs text-slate-500 mt-6 border-t border-slate-800/80 pt-4">
-                    Configured Model: <span class="text-indigo-400 font-semibold font-mono">llama-3.3-70b-versatile</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Incidents Log Table -->
-        <section class="glass-panel rounded-2xl p-6">
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h3 class="text-lg font-bold font-outfit tracking-wide">Incident Logs</h3>
-                    <p class="text-xs text-slate-400">All security and performance incidents detected during reviews</p>
-                </div>
-                <div class="relative w-72">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
-                    </span>
-                    <input id="search-input" type="text" placeholder="Search incidents..." oninput="filterIncidents()" class="w-full bg-slate-950/50 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-blue-500/50 transition-colors">
-                </div>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full border-collapse text-left">
-                    <thead>
-                        <tr class="border-b border-slate-800/80 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                            <th class="py-3 px-4">ID</th>
-                            <th class="py-3 px-4">Severity</th>
-                            <th class="py-3 px-4">Incident Title</th>
-                            <th class="py-3 px-4">Affected Components</th>
-                            <th class="py-3 px-4">Logged At</th>
-                            <th class="py-3 px-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="incidents-table-body" class="divide-y divide-slate-800/50 text-sm">
-                        <!-- Loaded dynamically -->
-                        <tr>
-                            <td colspan="6" class="text-center py-8 text-slate-500">Loading incidents...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </main>
-
-    <!-- Incident Detail / Manual Add Modal -->
-    <div id="incidentModal" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-sm flex items-center justify-center">
-        <div class="glass-panel rounded-2xl w-full max-w-xl p-6 m-4 shadow-2xl">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-bold font-outfit">Report Incident Manually</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-200">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-            
-            <form id="incidentForm" onsubmit="submitIncident(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Incident Title</label>
-                    <input required id="form-title" type="text" placeholder="e.g. Memory Leak in parser" class="w-full bg-slate-950/40 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500/50">
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Severity</label>
-                        <select id="form-severity" class="w-full bg-slate-950/40 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500/50">
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                            <option value="critical">Critical</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Affected Components</label>
-                        <input id="form-components" type="text" placeholder="e.g. auth-service, database" class="w-full bg-slate-950/40 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500/50">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Root Cause</label>
-                    <textarea id="form-cause" rows="2" placeholder="Detail the root cause of this incident..." class="w-full bg-slate-950/40 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500/50"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Fix / Remediation</label>
-                    <textarea id="form-fix" rows="2" placeholder="Steps taken or recommended to fix..." class="w-full bg-slate-950/40 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500/50"></textarea>
-                </div>
-
-                <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-900 hover:bg-slate-800 text-slate-300 font-medium transition-colors">Cancel</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg text-sm bg-blue-600 hover:bg-blue-500 text-white font-medium shadow-lg shadow-blue-500/10 transition-colors">Save Incident</button>
-                </div>
-            </form>
+        <div class="status-card">
+          <span class="status-name"><i class="fa-solid fa-microchip" style="color:#A78BFA;margin-right:8px"></i>Groq Inference</span>
+          <span class="status-ok"><span class="status-dot" style="width:6px;height:6px;margin:0"></span>Ready</span>
         </div>
+        <div class="status-card">
+          <span class="status-name"><i class="fa-solid fa-brain" style="color:#FFD166;margin-right:8px"></i>ChromaDB Memory</span>
+          <span class="status-ok"><span class="status-dot" style="width:6px;height:6px;margin:0"></span>Indexed</span>
+        </div>
+      </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)">
+        Model: <span style="color:#A78BFA;font-weight:600">llama-3.3-70b-versatile</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incidents Table -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Incident Registry</div>
+        <div class="panel-sub">All security and performance incidents detected during reviews</div>
+      </div>
+      <div class="search-bar">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input id="search-input" type="text" placeholder="Search incidents..." oninput="filterIncidents()">
+      </div>
     </div>
 
-    <!-- Script Section -->
-    <script>
-        let incidentsList = [];
-        let severityChart = null;
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Severity</th>
+            <th>Title</th>
+            <th>Affected Components</th>
+            <th>Logged At</th>
+            <th style="text-align:right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="incidents-tbody">
+          <tr><td colspan="6"><div class="empty-state">
+            <div class="empty-icon"><i class="fa-solid fa-radar"></i></div>
+            <div class="empty-title">Loading incidents...</div>
+          </div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-        // Fetch data when page loads
-        window.addEventListener('DOMContentLoaded', () => {
-            fetchIncidentsData();
-        });
+</main>
 
-        async function fetchIncidentsData() {
-            try {
-                const res = await fetch('/incidents');
-                const data = await res.json();
-                incidentsList = data.incidents || [];
-                
-                updateStats();
-                renderTable(incidentsList);
-                renderChart();
-            } catch (err) {
-                console.error("Failed to fetch data:", err);
-            }
-        }
+<!-- Add Incident Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Report New Incident</div>
+      <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Incident Title</label>
+      <input class="form-input" id="f-title" type="text" placeholder="e.g. SQL Injection in auth endpoint" required>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Severity</label>
+        <select class="form-input" id="f-severity">
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Affected Components</label>
+        <input class="form-input" id="f-components" type="text" placeholder="e.g. auth-service, db">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Root Cause</label>
+      <textarea class="form-input" id="f-cause" rows="2" placeholder="Describe the technical root cause..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Fix / Remediation</label>
+      <textarea class="form-input" id="f-fix" rows="2" placeholder="Steps taken or recommended..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitIncident()"><i class="fa-solid fa-floppy-disk"></i> Save Incident</button>
+    </div>
+  </div>
+</div>
 
-        function updateStats() {
-            const total = incidentsList.length;
-            const criticalHigh = incidentsList.filter(i => i.severity === 'critical' || i.severity === 'high').length;
-            const medium = incidentsList.filter(i => i.severity === 'medium').length;
-            
-            // Randomly simulate reviews number for visual hackathon wow factor
-            document.getElementById('stat-total-reviews').innerText = total + 12; 
-            document.getElementById('stat-critical-high').innerText = criticalHigh;
-            document.getElementById('stat-medium').innerText = medium;
-            document.getElementById('stat-active').innerText = total;
-        }
+<script>
+let incidents = [];
+let chart = null;
 
-        function renderTable(incidents) {
-            const tableBody = document.getElementById('incidents-table-body');
-            tableBody.innerHTML = '';
+window.onload = fetchData;
 
-            if (incidents.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center py-8 text-slate-500">No active incidents found.</td>
-                    </tr>
-                `;
-                return;
-            }
+async function fetchData() {
+  try {
+    const res = await fetch('/incidents');
+    const data = await res.json();
+    incidents = data.incidents || [];
+    updateMetrics();
+    renderTable(incidents);
+    renderChart();
+  } catch(e) { console.error(e); }
+}
 
-            incidents.forEach(inc => {
-                const date = new Date(inc.created_at).toLocaleDateString('en-US', {
-                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                });
+function updateMetrics() {
+  const critical = incidents.filter(i => i.severity === 'critical' || i.severity === 'high').length;
+  document.getElementById('stat-total').textContent = incidents.length;
+  document.getElementById('stat-critical').textContent = critical;
+  document.getElementById('stat-prs').textContent = incidents.length + 12;
+}
 
-                let severityBadge = '';
-                if (inc.severity === 'critical') {
-                    severityBadge = `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded text-xs font-semibold">Critical</span>`;
-                } else if (inc.severity === 'high') {
-                    severityBadge = `<span class="bg-orange-500/10 text-orange-400 border border-orange-500/20 px-2 py-0.5 rounded text-xs font-semibold">High</span>`;
-                } else if (inc.severity === 'medium') {
-                    severityBadge = `<span class="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2 py-0.5 rounded text-xs font-semibold">Medium</span>`;
-                } else {
-                    severityBadge = `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded text-xs font-semibold">Low</span>`;
-                }
+function severityBadge(s) {
+  const map = {
+    critical: ['sev-critical', 'Critical'],
+    high: ['sev-high', 'High'],
+    medium: ['sev-medium', 'Medium'],
+    low: ['sev-low', 'Low']
+  };
+  const [cls, label] = map[s] || ['sev-low', s];
+  return `<span class="severity-badge ${cls}">${label}</span>`;
+}
 
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-900/20 transition-colors";
-                tr.innerHTML = `
-                    <td class="py-4 px-4 font-mono text-slate-400">${inc.id}</td>
-                    <td class="py-4 px-4">${severityBadge}</td>
-                    <td class="py-4 px-4 font-semibold text-slate-200">${inc.title}</td>
-                    <td class="py-4 px-4 font-mono text-xs text-indigo-300">${inc.affected_components || 'N/A'}</td>
-                    <td class="py-4 px-4 text-xs text-slate-400">${date}</td>
-                    <td class="py-4 px-4 text-right">
-                        <button onclick="deleteIncidentItem(${inc.id})" class="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2 rounded-lg transition-colors" title="Delete / Resolve">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </td>
-                `;
-                tableBody.appendChild(tr);
-            });
-        }
+function renderTable(list) {
+  const tbody = document.getElementById('incidents-tbody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">
+      <div class="empty-icon"><i class="fa-solid fa-shield-check"></i></div>
+      <div class="empty-title">No incidents logged yet</div>
+      <div class="empty-sub">Once PRISM detects a critical finding in a pull request, it will automatically appear here. You can also report incidents manually.</div>
+      <button class="btn btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> Report First Incident</button>
+    </div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(inc => {
+    const date = new Date(inc.created_at).toLocaleDateString('en-US', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `<tr>
+      <td style="color:var(--muted);font-family:monospace;font-size:12px">#${inc.id}</td>
+      <td>${severityBadge(inc.severity)}</td>
+      <td style="font-weight:600;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${inc.title}</td>
+      <td style="color:var(--muted);font-size:12px;font-family:monospace">${inc.affected_components || '—'}</td>
+      <td style="color:var(--muted);font-size:12px">${date}</td>
+      <td style="text-align:right"><button class="action-btn" onclick="deleteInc(${inc.id})" title="Delete"><i class="fa-solid fa-trash-can"></i></button></td>
+    </tr>`;
+  }).join('');
+}
 
-        function filterIncidents() {
-            const query = document.getElementById('search-input').value.toLowerCase();
-            const filtered = incidentsList.filter(inc => 
-                inc.title.toLowerCase().includes(query) || 
-                (inc.affected_components && inc.affected_components.toLowerCase().includes(query)) ||
-                inc.severity.toLowerCase().includes(query)
-            );
-            renderTable(filtered);
-        }
+function renderChart() {
+  const c = {critical:0,high:0,medium:0,low:0};
+  incidents.forEach(i => { if(c[i.severity]!==undefined) c[i.severity]++; });
+  const ctx = document.getElementById('severityChart').getContext('2d');
+  if(chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Critical','High','Medium','Low'],
+      datasets: [{
+        data: [c.critical, c.high, c.medium, c.low],
+        backgroundColor: ['rgba(255,77,109,.5)','rgba(255,140,66,.5)','rgba(255,209,102,.5)','rgba(124,92,255,.5)'],
+        borderColor: ['#FF4D6D','#FF8C42','#FFD166','#7C5CFF'],
+        borderWidth: 1.5,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision:0, color:'#64748B' }, grid: { color:'rgba(255,255,255,.04)' } },
+        x: { ticks: { color:'#64748B' }, grid: { display: false } }
+      }
+    }
+  });
+}
 
-        function renderChart() {
-            const counts = { critical: 0, high: 0, medium: 0, low: 0 };
-            incidentsList.forEach(inc => {
-                if (counts[inc.severity] !== undefined) {
-                    counts[inc.severity]++;
-                }
-            });
+function filterIncidents() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  renderTable(incidents.filter(i =>
+    i.title.toLowerCase().includes(q) ||
+    (i.affected_components||'').toLowerCase().includes(q) ||
+    i.severity.toLowerCase().includes(q)
+  ));
+}
 
-            const ctx = document.getElementById('severityChart').getContext('2d');
-            
-            if (severityChart) {
-                severityChart.destroy();
-            }
+function openModal() { document.getElementById('modal').classList.add('open'); }
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  ['f-title','f-components','f-cause','f-fix'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-severity').value = 'low';
+}
 
-            severityChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Critical', 'High', 'Medium', 'Low'],
-                    datasets: [{
-                        label: 'Incidents Count',
-                        data: [counts.critical, counts.high, counts.medium, counts.low],
-                        backgroundColor: [
-                            'rgba(239, 68, 68, 0.45)',  // Red
-                            'rgba(249, 115, 22, 0.45)', // Orange
-                            'rgba(234, 179, 8, 0.45)',  // Yellow
-                            'rgba(59, 130, 246, 0.45)'  // Blue
-                        ],
-                        borderColor: [
-                            'rgb(239, 68, 68)',
-                            'rgb(249, 115, 22)',
-                            'rgb(234, 179, 8)',
-                            'rgb(59, 130, 246)'
-                        ],
-                        borderWidth: 1.5,
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { precision: 0, color: '#94a3b8' },
-                            grid: { color: 'rgba(255,255,255,0.05)' }
-                        },
-                        x: {
-                            ticks: { color: '#94a3b8' },
-                            grid: { display: false }
-                        }
-                    }
-                }
-            });
-        }
+async function submitIncident() {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { alert('Title is required'); return; }
+  try {
+    const res = await fetch('/incidents', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        title,
+        severity: document.getElementById('f-severity').value,
+        affected_components: document.getElementById('f-components').value,
+        root_cause: document.getElementById('f-cause').value,
+        fix: document.getElementById('f-fix').value,
+        postmortem: ''
+      })
+    });
+    if(res.ok) { closeModal(); fetchData(); }
+    else alert('Error saving incident');
+  } catch(e) { console.error(e); }
+}
 
-        // Modal triggers
-        window.openModal = function() {
-            document.getElementById('incidentModal').classList.remove('hidden');
-        }
-
-        window.closeModal = function() {
-            document.getElementById('incidentModal').classList.add('hidden');
-            document.getElementById('incidentForm').reset();
-        }
-
-        window.submitIncident = async function(e) {
-            e.preventDefault();
-            const payload = {
-                title: document.getElementById('form-title').value,
-                severity: document.getElementById('form-severity').value,
-                affected_components: document.getElementById('form-components').value || '',
-                root_cause: document.getElementById('form-cause').value || '',
-                fix: document.getElementById('form-fix').value || '',
-                postmortem: ''
-            };
-
-            try {
-                const res = await fetch('/incidents', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (res.ok) {
-                    closeModal();
-                    fetchIncidentsData();
-                } else {
-                    alert("Error saving incident");
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        window.deleteIncidentItem = async function(id) {
-            if (!confirm("Are you sure you want to resolve and delete this incident record?")) return;
-            try {
-                const res = await fetch(`/incidents/${id}`, { method: 'DELETE' });
-                if (res.ok) {
-                    fetchIncidentsData();
-                } else {
-                    alert("Error deleting incident");
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        }
-    </script>
+async function deleteInc(id) {
+  if(!confirm('Resolve and delete this incident?')) return;
+  try {
+    const res = await fetch(`/incidents/${id}`, { method:'DELETE' });
+    if(res.ok) fetchData();
+    else alert('Error deleting incident');
+  } catch(e) { console.error(e); }
+}
+</script>
 </body>
 </html>

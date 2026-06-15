@@ -39,18 +39,21 @@ To make it easy for judges and developers to explore PRISM, we have structured o
 
 ```
 PRISM/
-├── main.py            # FastAPI Application & Webhook endpoint
-├── database.py        # SQLAlchemy & Database Operations (PostgreSQL/SQLite)
-├── memory.py          # Chroma Vector DB Embeddings & RAG Search
-├── test_prism.py      # Automated Verification Script
-├── requirements.txt   # Python Dependencies
-├── .env               # Environment placeholders
-├── README.md          # Main Documentation Entry
-├── PROJECT_OVERVIEW.md# Detailed Project Overview
-├── SYSTEM_ARCHITECTURE.md # System Design & Diagram
-└── SAMPLE_DEMO.md     # Setup & Walkthrough
+├── main.py                  # FastAPI Application & Webhook endpoint
+├── database.py              # SQLAlchemy & Database Operations (PostgreSQL/SQLite)
+├── memory.py                # Chroma Vector DB Embeddings & RAG Search
+├── test_prism.py            # Automated Verification Script
+├── requirements.txt         # Python Dependencies
+├── .env.example             # Environment variable template (copy to .env)
+├── README.md                # Main Documentation Entry
+├── PROJECT_OVERVIEW.md      # Detailed Project Overview
+├── SYSTEM_ARCHITECTURE.md   # System Design & Diagram
+└── SAMPLE_DEMO.md           # Setup & Walkthrough
 ```
-# 🏗️ System Architecture
+
+---
+
+## 🏗️ System Architecture
 
 The end-to-end flow of PRISM, from GitHub pull requests to memory-augmented AI analysis.
 
@@ -58,7 +61,7 @@ The end-to-end flow of PRISM, from GitHub pull requests to memory-augmented AI a
 
 ---
 
-# 🧠 Memory-Augmented Review
+## 🧠 Memory-Augmented Review
 
 PRISM searches historical incidents and postmortems to identify recurring failure patterns before code reaches production.
 
@@ -66,7 +69,7 @@ PRISM searches historical incidents and postmortems to identify recurring failur
 
 ---
 
-# 📊 Dashboard Analytics
+## 📊 Dashboard Analytics
 
 A centralized view of incidents, recurring bugs, and organizational memory insights.
 
@@ -74,11 +77,23 @@ A centralized view of incidents, recurring bugs, and organizational memory insig
 
 ---
 
-# 🔌 API Endpoints
+## 🔌 API Endpoints
 
 Interactive FastAPI documentation exposing incident management, memory retrieval, and review endpoints.
 
+| Method | Endpoint | Description |
+|--------|----------|--------------|
+| GET | `/` | Redirects to dashboard |
+| GET | `/health` | Live health check (DB, API keys status) |
+| GET | `/dashboard` | Interactive incident memory dashboard |
+| GET | `/incidents` | List all incidents (JSON) |
+| POST | `/incidents` | Log a new incident |
+| DELETE | `/incidents/{id}` | Resolve & delete an incident |
+| POST | `/webhook` | GitHub Pull Request webhook endpoint |
+| GET | `/docs` | Auto-generated Swagger UI |
+
 ![API](docs/api.png)
+
 ---
 
 ## 🚀 Quick Local Setup
@@ -103,11 +118,15 @@ pip install -r requirements.txt
 ```
 
 ### 3. Configure `.env`
-Create a `.env` file in the root folder with the following keys:
+Copy the template and fill in your credentials:
+```bash
+cp .env.example .env
+```
 ```env
-GITHUB_TOKEN=your_github_personal_access_token
-GROQ_API_KEY=your_groq_api_key
-DATABASE_URL=postgresql://username:password@localhost:5432/prism  # Optional fallback to SQLite
+GROQ_API_KEY=your_groq_api_key        # Required — get free at console.groq.com
+GITHUB_TOKEN=your_github_token        # Required — github.com/settings/tokens
+DATABASE_URL=                         # Optional — leave blank for local SQLite
+PORT=8080
 ```
 
 ### 4. Run the Verification Test
@@ -134,6 +153,11 @@ Open **[http://localhost:8080/dashboard](http://localhost:8080/dashboard)** in y
 
 ---
 
-## 🛡️ License
+## 🌐 Live Deployment
 
-PRISM is distributed under the MIT License. See `LICENSE` for details.
+PRISM is live and deployed on Render:
+👉 **https://prism-ldxm.onrender.com/dashboard**
+
+---
+
+Made with ❤️ for OSC AI Build 1.0

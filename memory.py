@@ -43,3 +43,11 @@ def search_similar_incidents(query: str, n_results: int = 3) -> list[str]:
         # Chroma returns a list of lists of documents. Return the first list.
         return results["documents"][0]
     return []
+
+
+def delete_incident(id: str) -> None:
+    """
+    Deletes an incident embedding from Chroma vector DB by ID.
+    """
+    collection.delete(ids=[str(id)])
+
