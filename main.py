@@ -38,6 +38,28 @@ app = FastAPI(
 PR_TRIGGER_ACTIONS = {"opened", "synchronize", "reopened"}
 
 
+@app.on_event("startup")
+def sync_db_to_chroma():
+    """Sync all PostgreSQL incidents to ChromaDB on startup."""
+    print("[PRISM] 🧠 Syncing PostgreSQL incidents to ChromaDB memory...")
+    try:
+        db = database.SessionLocal()
+        incidents = db.query(database.Incident).all()
+        db.close()
+        for inc in incidents:
+            memory.embed_incident(
+                id=str(inc.id),
+                title=inc.title,
+                root_cause=inc.root_cause,
+                fix=inc.fix,
+                postmortem=inc.postmortem or ""
+            )
+        print(f"[PRISM] Successfully synced {len(incidents)} incidents to ChromaDB.")
+    except Exception as e:
+        print(f"[PRISM] ❌ Error syncing DB to ChromaDB on startup: {e}")
+
+
+
 
 @app.get("/")
 async def root():

@@ -24,7 +24,7 @@ def embed_incident(
         f"Postmortem: {postmortem}"
     )
     
-    collection.add(
+    collection.upsert(
         documents=[combined_text],
         ids=[str(id)]
     )
