@@ -210,7 +210,7 @@ async def get_dashboard(request: Request):
                     "created_at": incident.created_at.isoformat() if incident.created_at else None
                 })
             
-        global_reviews = database.get_counter("prs_reviewed")
+            global_reviews = database.get_counter("prs_reviewed")
             return JSONResponse(content={
                 "total_incidents": len(incidents_list),
                 "incidents": incidents_list,
