@@ -2,3 +2,8 @@ fastapi
 uvicorn
 httpx
 python-dotenv
+sqlalchemy
+psycopg2-binary
+chromadb
+groq
+
