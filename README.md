@@ -2,7 +2,11 @@
 
 > **Catch recurring production bugs before they reach main.** PRISM is a context-aware pull request code review bot that uses vector search (ChromaDB) to recall past incidents and leverages Groq's Llama 3 models to perform deep, incident-guided PR analysis.
 
----
+[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-prism--ldxm.onrender.com-7C5CFF?style=for-the-badge)](https://prism-ldxm.onrender.com/dashboard)
+[![Dashboard](https://img.shields.io/badge/📊%20Dashboard-View%20Now-00D084?style=for-the-badge)](https://prism-ldxm.onrender.com/dashboard)
+[![API Docs](https://img.shields.io/badge/📖%20API%20Docs-Swagger%20UI-blue?style=for-the-badge)](https://prism-ldxm.onrender.com/docs)
+
+
 
 ## 💡 The Core Innovation
 
