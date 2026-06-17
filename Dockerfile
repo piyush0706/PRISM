@@ -15,8 +15,7 @@ WORKDIR /app
 # Copy installed packages from builder
 COPY --from=builder /install /usr/local
 
-# Copy application source
-COPY main.py .
+COPY app/ app/
 
 # Cloud Run injects $PORT; fall back to 8080 locally
 ENV PORT=8080
@@ -24,4 +23,4 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Use shell form so $PORT is expanded at container start
-CMD uvicorn main:app --host 0.0.0.0 --port $PORT
+CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT

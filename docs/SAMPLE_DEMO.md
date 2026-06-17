@@ -19,14 +19,14 @@ The `/health` endpoint instantly confirms that the server, PostgreSQL database, 
 
 ---
 
-## 🛠️ Method 1: The Automated Console Test (`test_prism.py`)
+## 🛠️ Method 1: The Automated Console Test (`tests/test_prism.py`)
 
-We have packaged a complete, isolated verification pipeline in `test_prism.py`. It creates a temporary database, seeds incidents, executes vector searches, and prints the AI code review.
+We have packaged a complete, isolated verification pipeline in `tests/test_prism.py`. It creates a temporary database, seeds incidents, executes vector searches, and prints the AI code review.
 
 ### How to Run:
 From the project root folder, execute:
 ```bash
-python test_prism.py
+PYTHONPATH=. python3 tests/test_prism.py
 ```
 
 ### Expected Output Structure:
@@ -69,7 +69,7 @@ Explore the live API and interactive memory dashboard using a local web server.
 
 ### 1. Launch the FastAPI server
 ```bash
-python main.py
+python3 -m app.main
 ```
 *The server will start running on port `8080` (`http://localhost:8080`).*
 
@@ -150,7 +150,7 @@ Invoke-RestMethod -Uri "http://localhost:8080/webhook" -Method Post -Headers @{"
 ```
 
 #### Expected Server Console output:
-Watch your terminal running `main.py` print the steps in real time:
+Watch your terminal running the app package print the steps in real time:
 ```text
 [PRISM] PR #42 'opened' in test-user/payment-gateway — starting review...
 [PRISM] Diff fetched (341 chars). Fetching memory from Chroma...

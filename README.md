@@ -24,9 +24,9 @@ Every time a production incident is resolved and logged in your system, PRISM:
 
 To make it easy for judges and developers to explore PRISM, we have structured our documentation into specialized guides:
 
-* 📖 **[Project Overview](./PROJECT_OVERVIEW.md)**: Details the problem, our incident-memory solution, key differentiators, and the future scope of the project.
-* ⚙️ **[System Architecture](./SYSTEM_ARCHITECTURE.md)**: Deep dive into the data flow, Mermaid architecture diagrams, database schemas, and async FastAPI design.
-* 🚀 **[Sample Demo Guide](./SAMPLE_DEMO.md)**: Run our automated verification suite (`test_prism.py`) and view the local interactive dashboard in under 2 minutes.
+* 📖 **[Project Overview](docs/PROJECT_OVERVIEW.md)**: Details the problem, our incident-memory solution, key differentiators, and the future scope of the project.
+* ⚙️ **[System Architecture](docs/SYSTEM_ARCHITECTURE.md)**: Deep dive into the data flow, Mermaid architecture diagrams, database schemas, and async FastAPI design.
+* 🚀 **[Sample Demo Guide](docs/SAMPLE_DEMO.md)**: Run our automated verification suite (`tests/test_prism.py`) and view the local interactive dashboard in under 2 minutes.
 
 ---
 
@@ -44,16 +44,36 @@ To make it easy for judges and developers to explore PRISM, we have structured o
 
 ```
 PRISM/
-├── main.py                  # FastAPI Application & Webhook endpoint
-├── database.py              # SQLAlchemy & Database Operations (PostgreSQL/SQLite)
-├── memory.py                # Chroma Vector DB Embeddings & RAG Search
-├── test_prism.py            # Automated Verification Script
-├── requirements.txt         # Python Dependencies
-├── .env.example             # Environment variable template (copy to .env)
-├── README.md                # Main Documentation Entry
-├── PROJECT_OVERVIEW.md      # Detailed Project Overview
-├── SYSTEM_ARCHITECTURE.md   # System Design & Diagram
-└── SAMPLE_DEMO.md           # Setup & Walkthrough
+├── app/                      # 🧠 Main Application Package
+│   ├── templates/            # Web Dashboard Templates
+│   │   └── dashboard.html
+│   ├── __init__.py
+│   ├── database.py           # DB ORM Layer (PostgreSQL)
+│   ├── main.py               # API & Webhook Handler
+│   └── memory.py             # Vector database (ChromaDB)
+│
+├── docs/                     # 📖 Documentation & Architecture Assets
+│   ├── api.png
+│   ├── architecture.jpeg
+│   ├── dashboard.png
+│   ├── memory-test.png
+│   ├── PROJECT_OVERVIEW.md
+│   ├── SYSTEM_ARCHITECTURE.md
+│   └── SAMPLE_DEMO.md
+│
+├── scripts/                  # 🛠️ Administrative & Seed Scripts
+│   └── seed.py
+│
+├── tests/                    # 🧪 Test Suites
+│   ├── test_groq.py
+│   └── test_prism.py
+│
+├── payment_handler.py        # 🐞 Buggy Demo File (for PR review tests)
+├── README.md                 # Project Landing Page
+├── requirements.txt          # Dependencies
+├── Dockerfile                # Deployment config
+├── .env.example
+└── render.yaml               # Render IaC template
 ```
 
 ---
@@ -137,12 +157,12 @@ PORT=8080
 ### 4. Run the Verification Test
 You don't need a live webhook or live database connection to test. Run our pre-packaged local integration suite:
 ```bash
-python test_prism.py
+PYTHONPATH=. python3 tests/test_prism.py
 ```
 
 ### 5. Start the Live Server & Dashboard
 ```bash
-python main.py
+python3 -m app.main
 ```
 Open **[http://localhost:8080/dashboard](http://localhost:8080/dashboard)** in your browser to view the interactive incident memory dashboard.
 

@@ -17,9 +17,9 @@ flowchart TB
     end
 
     subgraph Server [PRISM FastAPI Engine]
-        api[main.py / FastAPI App]
-        db_helper[database.py / SQLAlchemy]
-        vector_helper[memory.py / ChromaDB Client]
+        api[app/main.py / FastAPI App]
+        db_helper[app/database.py / SQLAlchemy]
+        vector_helper[app/memory.py / ChromaDB Client]
     end
 
     subgraph AI [LLM Reasoning Engine]
@@ -55,20 +55,20 @@ flowchart TB
 
 PRISM's codebase is designed with a strict separation of concerns:
 
-### 1. Web Controller & Routing (`main.py`)
+### 1. Web Controller & Routing (`app/main.py`)
 * Serves as the FastAPI entry point.
 * Handles GitHub webhook triggers (`POST /webhook`) asynchronously.
 * Provides the REST endpoint for logging past issues (`POST /incidents`).
 * Dynamically compiles and serves the Web interface dashboard (`GET /dashboard`) using a premium Tailwind-like embedded CSS glassmorphism theme.
 * Maintains a runtime state counter for reviewed PRs.
 
-### 2. Relational Database Handler (`database.py`)
+### 2. Relational Database Handler (`app/database.py`)
 * Configures SQLAlchemy database connections.
 * Implements dynamic connection management: auto-connects to a production PostgreSQL database via `DATABASE_URL` or falls back to local SQLite (`prism.db`) if not configured.
 * Defines the SQL model representing the structured incident schema.
 * Handles write transactions (`create_incident`) and read queries (`get_all_incidents`).
 
-### 3. Vector Database Handler (`memory.py`)
+### 3. Vector Database Handler (`app/memory.py`)
 * Coordinates connection to a local, persistent vector store inside `./chroma_db` using **ChromaDB**.
 * Formats unstructured incident reports into combined semantic text strings.
 * Embeds documents and indices them under their database-generated SQL IDs.

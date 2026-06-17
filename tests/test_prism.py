@@ -13,8 +13,8 @@ if os.path.exists("./chroma_db"):
 
 # Import TestClient and the app/endpoints/memory/database
 from fastapi.testclient import TestClient
-from main import app
-import memory
+from app.main import app
+from app import memory
 
 client = TestClient(app)
 
@@ -74,7 +74,7 @@ for idx, match in enumerate(matches, start=1):
     print(f"\nMatch {idx}:\n{match}")
 
 print("\n--- Step 4: Calling review_with_groq() with the fake diff and matched incidents ---")
-from main import review_with_groq
+from app.main import review_with_groq
 
 groq_key = os.getenv("GROQ_API_KEY")
 # If the key is the default placeholder or not set, mock the Groq API call to avoid API authentication failure during testing

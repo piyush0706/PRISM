@@ -23,8 +23,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
 
-import database
-import memory
+from app import database
+from app import memory
 
 load_dotenv()
 
@@ -464,4 +464,4 @@ async def github_webhook(request: Request):
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8080))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port)
