@@ -1,4 +1,4 @@
-# 🔍 PRISM: AI-Powered Code Review Bot with Incident Memory
+# <img src="docs/logo.jpg" width="40" valign="middle"/> PRISM: Pull Request Incident Semantic Memory
 
 > **Catch recurring production bugs before they reach main.** PRISM is a context-aware pull request code review bot that uses vector search (ChromaDB) to recall past incidents and leverages Groq's Llama 3 models to perform deep, incident-guided PR analysis.
 
@@ -33,7 +33,9 @@ To make it easy for judges and developers to explore PRISM, we have structured o
 ## ⚡ Key Features
 
 * **🤖 Context-Aware AI Review:** Leverages Groq (`llama3-70b-8192`) to check pull request diffs for bugs, safety vulnerabilities, and performance anomalies.
-* **🧠 Long-Term Semantic memory:** Automatically retrieves and attaches relevant historical incident contexts to the LLM prompt.
+* **🧠 Long-Term Semantic Memory:** Automatically retrieves and attaches relevant historical incident contexts to the LLM prompt.
+* **✍️ Self-Learning Memory Loop:** Automatically parses and logs new critical or high-severity vulnerabilities found during code reviews back into the database as new incidents.
+* **🔄 Startup Auto-Sync & Persistence:** Rebuilds the ephemeral ChromaDB vector index from PostgreSQL database records automatically upon server start, preserving organizational memory across server restarts.
 * **📊 Visual Memory Dashboard:** Includes an elegant web interface (`/dashboard`) showing total incidents, reviewed PRs counter, and database records.
 * **🔌 Flexible Database Fallback:** Connects to PostgreSQL in production and gracefully falls back to local SQLite databases for zero-configuration testing.
 * **🐙 GitHub Webhook Ready:** Built with async FastAPI to listen for incoming GitHub `pull_request` events (`opened`, `synchronize`, `reopened`) and instantly post comments.
